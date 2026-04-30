@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+data/clean_logistics_dataset.csv
+
+storage/raw/
+storage/processed/
+storage/checkpoint/
+
+*.log
