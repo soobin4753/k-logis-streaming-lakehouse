@@ -12,6 +12,9 @@ Data Lake에 저장 → ETL → 집계 → Data Mart까지
 
 ## 🧱 Architecture
 
+<p align="center">
+  <img src="img/logistics_architecture.png" width="900"/>
+</p>
 
 Producer → Kafka → Spark Streaming → Raw → ETL → Processed → Aggregation → PostgreSQL
 
