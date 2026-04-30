@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="물류 파이프라인" id="0">
-    <mxGraphModel dx="1488" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="496" dy="283" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -31,7 +31,7 @@
         <mxCell id="mart" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#FFCCFF,#FF99FF);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;Data Mart&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;Region / Hub / Risk 분석&lt;br&gt;집계 데이터 생성&lt;/font&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="130" width="150" x="1320" y="600" as="geometry" />
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-1" edge="1" parent="1" source="src" target="producer">
+        <mxCell id="vUbbRhy43VmbEX2QA9eU-1" edge="1" parent="1" source="src" style="exitX=1.005;exitY=0.571;exitDx=0;exitDy=0;exitPerimeter=0;" target="producer">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="vUbbRhy43VmbEX2QA9eU-2" edge="1" parent="1" source="producer" target="kafka">
