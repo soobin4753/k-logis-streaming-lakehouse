@@ -37,6 +37,7 @@ schema = StructType(
         StructField("lead_time_days", DoubleType(), True),
         StructField("promised_delivery_at", StringType(), True),
         StructField("event_status", StringType(), True),
+        StructField("event_sequence", IntegerType(), True),
         StructField("event_timestamp", StringType(), True),
         StructField("processing_timestamp", StringType(), True),
         StructField("latitude", DoubleType(), True),
@@ -70,12 +71,24 @@ def main():
         raw_df
         .select(from_json(col("raw_payload"), schema).alias("data"))
         .select("data.*")
+        .filter(col("event_id").isNotNull())
+        .filter(col("shipment_id").isNotNull())
+        .filter(col("event_status").isNotNull())
         .dropDuplicates(["event_id"])
         .withColumn("event_timestamp", to_timestamp(col("event_timestamp")))
         .withColumn("processing_timestamp", to_timestamp(col("processing_timestamp")))
         .withColumn("promised_delivery_at", to_timestamp(col("promised_delivery_at")))
+        .filter(col("event_timestamp").isNotNull())
         .withColumn("event_date", to_date(col("event_timestamp")))
         .withColumn("event_hour", hour(col("event_timestamp")))
+        .withColumn("is_created", when(col("event_status") == "CREATED", True).otherwise(False))
+        .withColumn("is_assigned", when(col("event_status") == "ASSIGNED", True).otherwise(False))
+        .withColumn("is_pickup", when(col("event_status") == "PICKUP", True).otherwise(False))
+        .withColumn("is_in_transit", when(col("event_status") == "IN_TRANSIT", True).otherwise(False))
+        .withColumn("is_arrived_hub", when(col("event_status") == "ARRIVED_HUB", True).otherwise(False))
+        .withColumn("is_out_for_delivery", when(col("event_status") == "OUT_FOR_DELIVERY", True).otherwise(False))
+        .withColumn("is_delivered", when(col("event_status") == "DELIVERED", True).otherwise(False))
+        .withColumn("is_exception", when(col("exception_type").isNotNull(), True).otherwise(False))
         .withColumn(
             "is_event_delayed",
             when(
@@ -86,6 +99,7 @@ def main():
             ).otherwise(False),
         )
         .withColumn("processed_at", current_timestamp())
+        .orderBy("shipment_id", "event_sequence", "event_timestamp")
     )
 
     (

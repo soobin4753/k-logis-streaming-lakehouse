@@ -93,7 +93,8 @@ CREATE TABLE shipment_metrics (
     avg_hub_congestion_level DOUBLE PRECISION,
     exception_count INTEGER,
     final_risk_classification VARCHAR(30),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    final_event_sequence INTEGER
 );
 
 CREATE TABLE mart_region_delay (

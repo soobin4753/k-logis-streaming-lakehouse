@@ -47,6 +47,9 @@ def main():
 
     df = spark.read.parquet(PROCESSED_DELIVERY_EVENT_PATH)
 
+    # 이벤트 스트림 순서 보장
+    df = df.orderBy("shipment_id", "event_sequence", "event_timestamp")
+
     metrics_df = (
         df.groupBy("shipment_id")
         .agg(
@@ -57,29 +60,42 @@ def main():
             first("destination_region_id", ignorenulls=True).alias("destination_region_id"),
             first("origin_hub_id", ignorenulls=True).alias("origin_hub_id"),
             first("destination_hub_id", ignorenulls=True).alias("destination_hub_id"),
+
             spark_min("event_timestamp").alias("first_event_time"),
             spark_max(
                 when(col("event_status") == "DELIVERED", col("event_timestamp"))
             ).alias("delivered_time"),
+
             first("promised_delivery_at", ignorenulls=True).alias("promised_delivery_at"),
+
             count("*").alias("event_count"),
+            spark_max("event_sequence").alias("final_event_sequence"),
+
             avg("delay_probability").alias("avg_delay_probability"),
             spark_max("delay_probability").alias("max_delay_probability"),
             avg("traffic_congestion_level").alias("avg_traffic_congestion_level"),
             avg("weather_severity").alias("avg_weather_severity"),
             avg("hub_congestion_level").alias("avg_hub_congestion_level"),
+
             spark_sum(
                 when(col("exception_type").isNotNull(), 1).otherwise(0)
             ).alias("exception_count"),
+
             spark_max("risk_classification").alias("final_risk_classification"),
         )
         .withColumn(
             "total_delivery_minutes",
-            (unix_timestamp(col("delivered_time")) - unix_timestamp(col("first_event_time"))) / 60,
+            when(
+                col("delivered_time").isNotNull(),
+                (unix_timestamp(col("delivered_time")) - unix_timestamp(col("first_event_time"))) / 60,
+            ).otherwise(None),
         )
         .withColumn(
             "delay_minutes",
-            (unix_timestamp(col("delivered_time")) - unix_timestamp(col("promised_delivery_at"))) / 60,
+            when(
+                col("delivered_time").isNotNull(),
+                (unix_timestamp(col("delivered_time")) - unix_timestamp(col("promised_delivery_at"))) / 60,
+            ).otherwise(None),
         )
         .withColumn(
             "is_delayed",
@@ -102,6 +118,7 @@ def main():
             "delay_minutes",
             "is_delayed",
             "event_count",
+            "final_event_sequence",
             "avg_delay_probability",
             "max_delay_probability",
             "avg_traffic_congestion_level",

@@ -17,16 +17,16 @@ from producer.config import (
     POSTGRES_PORT,
     POSTGRES_USER,
 )
-from producer.event_generator import ShipmentEventState
+from producer.event_generator import ShipmentEventStream
 
-CARGO_TYPES = [
-    "일반화물",
-    "신선식품",
-    "냉장식품",
-    "전자제품",
-    "의류",
-    "생활용품",
-    "산업자재",
+CARGO_PROFILES = [
+    {"cargo_type": "일반화물", "min_weight": 5, "max_weight": 2500},
+    {"cargo_type": "신선식품", "min_weight": 5, "max_weight": 1200},
+    {"cargo_type": "냉장식품", "min_weight": 5, "max_weight": 1500},
+    {"cargo_type": "전자제품", "min_weight": 1, "max_weight": 800},
+    {"cargo_type": "의류", "min_weight": 1, "max_weight": 600},
+    {"cargo_type": "생활용품", "min_weight": 2, "max_weight": 1000},
+    {"cargo_type": "산업자재", "min_weight": 200, "max_weight": 8000},
 ]
 
 
@@ -88,6 +88,31 @@ def load_master_data():
     return hubs, drivers, vehicles, hub_coordinates
 
 
+def calculate_shipping_cost(cargo_type, cargo_weight_kg, distance_factor, base_dataset_cost):
+    base_cost = float(base_dataset_cost or 15000)
+
+    cargo_multiplier = {
+        "일반화물": 1.0,
+        "신선식품": 1.25,
+        "냉장식품": 1.35,
+        "전자제품": 1.30,
+        "의류": 0.90,
+        "생활용품": 0.95,
+        "산업자재": 1.50,
+    }.get(cargo_type, 1.0)
+
+    weight_cost = cargo_weight_kg * random.uniform(8, 20)
+    distance_cost = distance_factor * random.uniform(3000, 8000)
+
+    return round((base_cost + weight_cost + distance_cost) * cargo_multiplier, 2)
+
+
+def estimate_distance_factor(origin_hub, destination_hub):
+    lat_gap = abs(origin_hub["latitude"] - destination_hub["latitude"])
+    lon_gap = abs(origin_hub["longitude"] - destination_hub["longitude"])
+    return max(1.0, (lat_gap + lon_gap) * 10)
+
+
 def create_shipment_and_dispatch(cur, hubs, drivers, vehicles, hub_coordinates, dataset_row):
     origin_hub, destination_hub = random.sample(hubs, 2)
 
@@ -98,15 +123,29 @@ def create_shipment_and_dispatch(cur, hubs, drivers, vehicles, hub_coordinates, 
     dispatch_id = f"DSP_{unique_suffix}"
 
     created_at = now
-    lead_time_days = float(dataset_row.get("lead_time_days") or random.uniform(1, 3))
-    promised_delivery_at = created_at + timedelta(days=max(0.3, lead_time_days))
+
+    raw_lead_time = float(dataset_row.get("lead_time_days") or random.uniform(1, 3))
+    lead_time_days = round(max(0.3, min(raw_lead_time, 10)), 2)
+    promised_delivery_at = created_at + timedelta(days=lead_time_days)
 
     driver_id = random.choice(drivers)
     vehicle_id = random.choice(vehicles)
 
-    cargo_type = random.choice(CARGO_TYPES)
-    cargo_weight_kg = round(random.uniform(5, 5000), 2)
-    shipping_costs = float(dataset_row.get("shipping_costs") or random.uniform(5000, 300000))
+    cargo_profile = random.choice(CARGO_PROFILES)
+    cargo_type = cargo_profile["cargo_type"]
+    cargo_weight_kg = round(
+        random.uniform(cargo_profile["min_weight"], cargo_profile["max_weight"]),
+        2,
+    )
+
+    distance_factor = estimate_distance_factor(origin_hub, destination_hub)
+
+    shipping_costs = calculate_shipping_cost(
+        cargo_type=cargo_type,
+        cargo_weight_kg=cargo_weight_kg,
+        distance_factor=distance_factor,
+        base_dataset_cost=dataset_row.get("shipping_costs"),
+    )
 
     cur.execute(
         """
@@ -150,7 +189,7 @@ def create_shipment_and_dispatch(cur, hubs, drivers, vehicles, hub_coordinates, 
         ),
     )
 
-    assigned_at = created_at + timedelta(minutes=random.randint(5, 40))
+    assigned_at = created_at + timedelta(minutes=random.randint(5, 30))
 
     cur.execute(
         """
@@ -193,7 +232,7 @@ def create_shipment_and_dispatch(cur, hubs, drivers, vehicles, hub_coordinates, 
     }
 
 
-def update_status(cur, shipment_id, dispatch_id, event_status):
+def update_current_status(cur, shipment_id, dispatch_id, event_status):
     cur.execute(
         """
         UPDATE shipment
@@ -203,15 +242,14 @@ def update_status(cur, shipment_id, dispatch_id, event_status):
         (event_status, shipment_id),
     )
 
-    if event_status in ["ASSIGNED", "PICKUP", "IN_TRANSIT", "DELIVERED"]:
-        cur.execute(
-            """
-            UPDATE dispatch
-            SET dispatch_status = %s
-            WHERE dispatch_id = %s
-            """,
-            (event_status, dispatch_id),
-        )
+    cur.execute(
+        """
+        UPDATE dispatch
+        SET dispatch_status = %s
+        WHERE dispatch_id = %s
+        """,
+        (event_status, dispatch_id),
+    )
 
 
 def create_kafka_producer():
@@ -228,21 +266,22 @@ def main():
     hubs, drivers, vehicles, hub_coordinates = load_master_data()
     producer = create_kafka_producer()
 
-    active_shipments = []
+    active_streams = []
     dataset_idx = 0
 
     print("Kafka Producer 시작")
+    print("현실 재현 데이터 생성 방식:")
+    print("CSV 1줄 → shipment 1건 생성 → 배송 상태 이벤트 7단계 생성")
+    print("CREATED → ASSIGNED → PICKUP → IN_TRANSIT → ARRIVED_HUB → OUT_FOR_DELIVERY → DELIVERED")
     print(f"topic: {KAFKA_TOPIC}")
-    print(f"clean dataset rows: {len(dataset_rows)}")
-    print("shipment / dispatch는 Producer 실행 중 생성됩니다.")
 
     while True:
         try:
-            if len(active_shipments) < 30:
+            if len(active_streams) < 25:
                 conn = get_conn()
                 cur = conn.cursor()
 
-                for _ in range(random.randint(1, 5)):
+                for _ in range(random.randint(1, 4)):
                     dataset_row = dataset_rows[dataset_idx % len(dataset_rows)]
                     dataset_idx += 1
 
@@ -255,8 +294,8 @@ def main():
                         dataset_row,
                     )
 
-                    active_shipments.append(
-                        ShipmentEventState(
+                    active_streams.append(
+                        ShipmentEventStream(
                             shipment_row=shipment_row,
                             dataset_row=dataset_row,
                         )
@@ -266,16 +305,21 @@ def main():
                 cur.close()
                 conn.close()
 
-            shipment_state = random.choice(active_shipments)
-            event = shipment_state.next_event()
+            stream = random.choice(active_streams)
+            event = stream.next_event()
 
             if event is None:
-                active_shipments.remove(shipment_state)
+                active_streams.remove(stream)
                 continue
 
             conn = get_conn()
             cur = conn.cursor()
-            update_status(cur, event["shipment_id"], event["dispatch_id"], event["event_status"])
+            update_current_status(
+                cur,
+                event["shipment_id"],
+                event["dispatch_id"],
+                event["event_status"],
+            )
             conn.commit()
             cur.close()
             conn.close()
@@ -284,19 +328,19 @@ def main():
             producer.flush()
 
             print(
-                f"[SEND] {event['shipment_id']} | "
+                f"[EVENT] {event['shipment_id']} | "
+                f"{event['event_sequence']} | "
                 f"{event['event_status']} | "
                 f"{event['current_hub_id']}->{event['next_hub_id']} | "
-                f"traffic={event['traffic_congestion_level']} | "
-                f"weather={event['weather_severity']} | "
                 f"delay={event['delay_probability']} | "
-                f"risk={event['risk_classification']}"
+                f"risk={event['risk_classification']} | "
+                f"exception={event['exception_type']}"
             )
 
-            if shipment_state.is_done():
-                active_shipments.remove(shipment_state)
+            if stream.is_done():
+                active_streams.remove(stream)
 
-            time.sleep(0.3)
+            time.sleep(random.uniform(0.2, 0.7))
 
         except KeyboardInterrupt:
             print("Producer 종료")
