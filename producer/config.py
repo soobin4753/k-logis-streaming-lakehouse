@@ -7,7 +7,7 @@ load_dotenv()
 def required_env(key: str) -> str:
     value = os.getenv(key)
     if value is None or value.strip() == "":
-        raise ValueError(f"환경변수 {key} 가 없습니다. .env 파일을 확인하세요.")
+        raise ValueError(f"환경변수 {key} 가 없습니다.")
     return value
 
 
@@ -21,3 +21,5 @@ POSTGRES_PASSWORD = required_env("POSTGRES_PASSWORD")
 POSTGRES_PORT = required_env("POSTGRES_PORT")
 
 CLEAN_DATASET_PATH = required_env("CLEAN_DATASET_PATH")
+
+MAX_SHIPMENTS = int(os.getenv("MAX_SHIPMENTS", "1000"))

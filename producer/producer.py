@@ -11,6 +11,7 @@ from producer.config import (
     CLEAN_DATASET_PATH,
     KAFKA_BOOTSTRAP_SERVERS,
     KAFKA_TOPIC,
+    MAX_SHIPMENTS,
     POSTGRES_DB,
     POSTGRES_HOST,
     POSTGRES_PASSWORD,
@@ -18,6 +19,7 @@ from producer.config import (
     POSTGRES_USER,
 )
 from producer.event_generator import ShipmentEventStream
+
 
 CARGO_PROFILES = [
     {"cargo_type": "일반화물", "min_weight": 5, "max_weight": 2500},
@@ -88,6 +90,12 @@ def load_master_data():
     return hubs, drivers, vehicles, hub_coordinates
 
 
+def estimate_distance_factor(origin_hub, destination_hub):
+    lat_gap = abs(origin_hub["latitude"] - destination_hub["latitude"])
+    lon_gap = abs(origin_hub["longitude"] - destination_hub["longitude"])
+    return max(1.0, (lat_gap + lon_gap) * 10)
+
+
 def calculate_shipping_cost(cargo_type, cargo_weight_kg, distance_factor, base_dataset_cost):
     base_cost = float(base_dataset_cost or 15000)
 
@@ -107,12 +115,6 @@ def calculate_shipping_cost(cargo_type, cargo_weight_kg, distance_factor, base_d
     return round((base_cost + weight_cost + distance_cost) * cargo_multiplier, 2)
 
 
-def estimate_distance_factor(origin_hub, destination_hub):
-    lat_gap = abs(origin_hub["latitude"] - destination_hub["latitude"])
-    lon_gap = abs(origin_hub["longitude"] - destination_hub["longitude"])
-    return max(1.0, (lat_gap + lon_gap) * 10)
-
-
 def create_shipment_and_dispatch(cur, hubs, drivers, vehicles, hub_coordinates, dataset_row):
     origin_hub, destination_hub = random.sample(hubs, 2)
 
@@ -122,10 +124,10 @@ def create_shipment_and_dispatch(cur, hubs, drivers, vehicles, hub_coordinates, 
     shipment_id = f"SHP_{unique_suffix}"
     dispatch_id = f"DSP_{unique_suffix}"
 
-    created_at = now
-
     raw_lead_time = float(dataset_row.get("lead_time_days") or random.uniform(1, 3))
     lead_time_days = round(max(0.3, min(raw_lead_time, 10)), 2)
+
+    created_at = now
     promised_delivery_at = created_at + timedelta(days=lead_time_days)
 
     driver_id = random.choice(drivers)
@@ -257,6 +259,8 @@ def create_kafka_producer():
         bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
         value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode("utf-8"),
         key_serializer=lambda v: v.encode("utf-8"),
+        linger_ms=5,
+        batch_size=32768,
         retries=3,
     )
 
@@ -268,20 +272,25 @@ def main():
 
     active_streams = []
     dataset_idx = 0
+    created_shipments = 0
+    sent_events = 0
 
     print("Kafka Producer 시작")
-    print("현실 재현 데이터 생성 방식:")
-    print("CSV 1줄 → shipment 1건 생성 → 배송 상태 이벤트 7단계 생성")
-    print("CREATED → ASSIGNED → PICKUP → IN_TRANSIT → ARRIVED_HUB → OUT_FOR_DELIVERY → DELIVERED")
-    print(f"topic: {KAFKA_TOPIC}")
+    print(f"목표 shipment 수: {MAX_SHIPMENTS}")
+    print("CSV 1줄 → shipment 1건 → 배송 상태 이벤트 7단계 생성")
 
-    while True:
-        try:
-            if len(active_streams) < 25:
+    try:
+        while True:
+            if created_shipments < MAX_SHIPMENTS and len(active_streams) < 100:
                 conn = get_conn()
                 cur = conn.cursor()
 
-                for _ in range(random.randint(1, 4)):
+                batch_size = min(
+                    random.randint(5, 10),
+                    MAX_SHIPMENTS - created_shipments,
+                )
+
+                for _ in range(batch_size):
                     dataset_row = dataset_rows[dataset_idx % len(dataset_rows)]
                     dataset_idx += 1
 
@@ -301,56 +310,65 @@ def main():
                         )
                     )
 
+                    created_shipments += 1
+
                 conn.commit()
                 cur.close()
                 conn.close()
 
-            stream = random.choice(active_streams)
-            event = stream.next_event()
+            if active_streams:
+                conn = get_conn()
+                cur = conn.cursor()
 
-            if event is None:
-                active_streams.remove(stream)
-                continue
+                event_batch_size = min(50, len(active_streams))
 
-            conn = get_conn()
-            cur = conn.cursor()
-            update_current_status(
-                cur,
-                event["shipment_id"],
-                event["dispatch_id"],
-                event["event_status"],
-            )
-            conn.commit()
-            cur.close()
-            conn.close()
+                for stream in random.sample(active_streams, event_batch_size):
+                    event = stream.next_event()
 
-            producer.send(KAFKA_TOPIC, key=event["shipment_id"], value=event)
-            producer.flush()
+                    if event is None:
+                        continue
 
-            print(
-                f"[EVENT] {event['shipment_id']} | "
-                f"{event['event_sequence']} | "
-                f"{event['event_status']} | "
-                f"{event['current_hub_id']}->{event['next_hub_id']} | "
-                f"delay={event['delay_probability']} | "
-                f"risk={event['risk_classification']} | "
-                f"exception={event['exception_type']}"
-            )
+                    update_current_status(
+                        cur,
+                        event["shipment_id"],
+                        event["dispatch_id"],
+                        event["event_status"],
+                    )
 
-            if stream.is_done():
-                active_streams.remove(stream)
+                    producer.send(
+                        KAFKA_TOPIC,
+                        key=event["shipment_id"],
+                        value=event,
+                    )
 
-            time.sleep(random.uniform(0.2, 0.7))
+                    sent_events += 1
 
-        except KeyboardInterrupt:
-            print("Producer 종료")
-            break
+                    if stream.is_done():
+                        active_streams.remove(stream)
 
-        except Exception as e:
-            print(f"producer error: {e}")
-            time.sleep(1)
+                conn.commit()
+                cur.close()
+                conn.close()
 
-    producer.close()
+            if created_shipments >= MAX_SHIPMENTS and len(active_streams) == 0:
+                print(
+                    f"Producer 종료: shipment {MAX_SHIPMENTS}건 생성 완료, "
+                    f"event {sent_events}건 전송 완료"
+                )
+                break
+
+            time.sleep(0.01)
+
+    except KeyboardInterrupt:
+        print("Producer 수동 종료")
+
+    except Exception as e:
+        print(f"producer error: {e}")
+        raise
+
+    finally:
+        producer.flush()
+        producer.close()
 
 
 if __name__ == "__main__":

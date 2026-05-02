@@ -31,6 +31,7 @@ def main():
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS)
         .option("subscribe", KAFKA_TOPIC)
         .option("startingOffsets", "latest")
+        .option("maxOffsetsPerTrigger", 5000)
         .load()
     )
 
@@ -69,6 +70,7 @@ def main():
         .option("path", RAW_DELIVERY_EVENT_PATH)
         .option("checkpointLocation", RAW_CHECKPOINT_PATH)
         .partitionBy("event_date")
+        .trigger(processingTime="1 second")
         .start()
     )
 
