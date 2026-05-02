@@ -1,72 +1,114 @@
 <mxfile host="app.diagrams.net">
-  <diagram name="물류 파이프라인" id="0">
-    <mxGraphModel dx="496" dy="283" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+  <diagram name="Logistics Streaming Lakehouse Architecture" id="logistics-architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
       <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-        <mxCell id="src" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#E6E6E6,#FF9999);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;b&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;Kaggle CSV&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;(물류 원천 데이터)&lt;br&gt;이벤트 기반 재구성&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="140" x="40" y="600" as="geometry" />
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title" value="Logistics Streaming Lakehouse Pipeline" style="text;html=1;strokeColor=none;fillColor=none;fontSize=28;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="470" y="30" width="650" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="producer" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#FFE6CC,#FFCC99);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;Kafka Producer&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;shipment / dispatch 생성&lt;br&gt;delivery_event 생성&lt;br&gt;Kafka 전송&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="150" width="140" x="200" y="600" as="geometry" />
+
+        <mxCell id="seed" value="&lt;b&gt;Seed Data 생성&lt;/b&gt;&lt;br&gt;&lt;br&gt;region / hub&lt;br&gt;driver / vehicle&lt;br&gt;기준 데이터 초기화" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="430" width="160" height="130" as="geometry"/>
         </mxCell>
-        <mxCell id="kafka" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#FFFFCC,#FFFF99);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;Kafka Topic&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;delivery-events&lt;br&gt;배송 이벤트 스트림 저장&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="140" x="360" y="600" as="geometry" />
+
+        <mxCell id="master_db" value="&lt;b&gt;Master Tables&lt;/b&gt;&lt;br&gt;&lt;br&gt;region&lt;br&gt;hub&lt;br&gt;driver&lt;br&gt;vehicle" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="60" y="620" width="160" height="130" as="geometry"/>
         </mxCell>
-        <mxCell id="stream" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#CCFFCC,#CCFF99);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;Spark Streaming&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;Kafka 이벤트 소비&lt;br&gt;delivery_event 적재&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="140" width="140" x="520" y="600" as="geometry" />
+
+        <mxCell id="producer" value="&lt;b&gt;Producer&lt;/b&gt;&lt;br&gt;&lt;br&gt;shipment / dispatch 생성&lt;br&gt;배송 이벤트 7단계 생성&lt;br&gt;Kafka 전송" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="270" y="430" width="180" height="130" as="geometry"/>
         </mxCell>
-        <mxCell id="raw" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#CCFFFF,#99FF99);" value="&lt;font style=&quot;font-size: 17px; color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;b&gt;Raw Layer (Parquet)&lt;/b&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;span style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/span&gt;원본 이벤트 저장&lt;br&gt;재처리 가능&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="130" width="140" x="680" y="600" as="geometry" />
+
+        <mxCell id="transaction_db" value="&lt;b&gt;Transaction Tables&lt;/b&gt;&lt;br&gt;&lt;br&gt;shipment&lt;br&gt;dispatch" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="270" y="620" width="180" height="110" as="geometry"/>
         </mxCell>
-        <mxCell id="etl" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#CCE5FF,#99FFFF);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;Spark ETL&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;정제 / 타입 변환&lt;br&gt;파생 컬럼 생성&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="150" width="140" x="840" y="600" as="geometry" />
+
+        <mxCell id="kafka" value="&lt;b&gt;Kafka&lt;/b&gt;&lt;br&gt;&lt;br&gt;Topic: delivery_events&lt;br&gt;실시간 이벤트 스트림" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFCC;strokeColor=#D6B656;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="510" y="430" width="180" height="120" as="geometry"/>
         </mxCell>
-        <mxCell id="processed" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#E5CCFF,#99CCFF);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;Processed Layer (Parquet)&lt;br&gt;&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;정제된 이벤트 데이터&lt;br&gt;분석 준비 완료&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="130" width="140" x="1000" y="600" as="geometry" />
+
+        <mxCell id="spark_streaming" value="&lt;b&gt;Spark Streaming&lt;/b&gt;&lt;br&gt;&lt;br&gt;Kafka 이벤트 소비&lt;br&gt;Raw Parquet 저장" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="750" y="430" width="180" height="120" as="geometry"/>
         </mxCell>
-        <mxCell id="metrics" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#FFD6E7,#CC99FF);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;Shipment Metrics&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;배송 시간 / 지연 계산&lt;br&gt;리스크 / KPI 생성&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="130" width="150" x="1160" y="600" as="geometry" />
+
+        <mxCell id="raw" value="&lt;b&gt;Raw Parquet&lt;/b&gt;&lt;br&gt;&lt;br&gt;/app/storage/raw/delivery_events&lt;br&gt;원본 이벤트 저장&lt;br&gt;재처리 가능" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="990" y="430" width="210" height="130" as="geometry"/>
         </mxCell>
-        <mxCell id="mart" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#FFCCFF,#FF99FF);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;font style=&quot;font-size: 17px;&quot;&gt;&lt;b&gt;Data Mart&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;Region / Hub / Risk 분석&lt;br&gt;집계 데이터 생성&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="130" width="150" x="1320" y="600" as="geometry" />
+
+        <mxCell id="etl" value="&lt;b&gt;Spark Batch ETL&lt;/b&gt;&lt;br&gt;&lt;br&gt;Raw → Processed&lt;br&gt;타입 변환&lt;br&gt;정제 / 파생 컬럼 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="990" y="650" width="210" height="130" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-1" edge="1" parent="1" source="src" style="exitX=1.005;exitY=0.571;exitDx=0;exitDy=0;exitPerimeter=0;" target="producer">
-          <mxGeometry relative="1" as="geometry" />
+
+        <mxCell id="processed" value="&lt;b&gt;Processed Parquet&lt;/b&gt;&lt;br&gt;&lt;br&gt;/app/storage/processed/delivery_events&lt;br&gt;분석 가능한 이벤트 데이터" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="650" width="230" height="120" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-2" edge="1" parent="1" source="producer" target="kafka">
-          <mxGeometry relative="1" as="geometry" />
+
+        <mxCell id="metrics" value="&lt;b&gt;shipment_metrics&lt;/b&gt;&lt;br&gt;&lt;br&gt;배송 단위 집계&lt;br&gt;배송 시간 / 지연 여부&lt;br&gt;리스크 KPI 생성" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="430" width="210" height="130" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-3" edge="1" parent="1" source="kafka" target="stream">
-          <mxGeometry relative="1" as="geometry" />
+
+        <mxCell id="mart" value="&lt;b&gt;Data Mart&lt;/b&gt;&lt;br&gt;&lt;br&gt;mart_region_delay&lt;br&gt;mart_hub_performance&lt;br&gt;mart_risk_summary" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="230" width="210" height="130" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-4" edge="1" parent="1" source="stream" target="raw">
-          <mxGeometry relative="1" as="geometry" />
+
+        <mxCell id="airflow_ingest" value="&lt;b&gt;Airflow Ingest DAG&lt;/b&gt;&lt;br&gt;&lt;br&gt;reset_postgres_tables&lt;br&gt;reset_storage_files&lt;br&gt;start_spark_streaming&lt;br&gt;run_producer_1000_shipments&lt;br&gt;wait_streaming_flush&lt;br&gt;stop_spark_streaming" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="390" y="130" width="260" height="180" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-5" edge="1" parent="1" source="raw" target="etl">
-          <mxGeometry relative="1" as="geometry" />
+
+        <mxCell id="airflow_etl" value="&lt;b&gt;Airflow ETL DAG&lt;/b&gt;&lt;br&gt;&lt;br&gt;reset_postgres_tables&lt;br&gt;etl_processed_delivery_events&lt;br&gt;build_shipment_metrics&lt;br&gt;build_data_mart" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#666666;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="850" y="130" width="260" height="150" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-6" edge="1" parent="1" source="etl" target="processed">
-          <mxGeometry relative="1" as="geometry" />
+
+        <mxCell id="flow1" edge="1" parent="1" source="seed" target="producer" style="endArrow=block;html=1;rounded=0;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-7" edge="1" parent="1" source="processed" target="metrics">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="flow2" edge="1" parent="1" source="producer" target="kafka" style="endArrow=block;html=1;rounded=0;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-8" edge="1" parent="1" source="metrics" target="mart">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="flow3" edge="1" parent="1" source="kafka" target="spark_streaming" style="endArrow=block;html=1;rounded=0;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="airflow" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=light-dark(#E6E6E6,#CCCCCC);" value="&lt;font style=&quot;font-size: 17px; color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;b&gt;Airflow&lt;/b&gt;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;&lt;br&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(0, 0, 0));&quot;&gt;ETL / Metrics / Mart 스케줄링&lt;br&gt;배치 자동화&lt;/font&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="200" x="750" y="250" as="geometry" />
+        <mxCell id="flow4" edge="1" parent="1" source="spark_streaming" target="raw" style="endArrow=block;html=1;rounded=0;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-9" edge="1" parent="1" source="airflow" style="dashed=1;" target="etl">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="flow5" edge="1" parent="1" source="raw" target="etl" style="endArrow=block;html=1;rounded=0;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-10" edge="1" parent="1" source="airflow" style="dashed=1;" target="metrics">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="flow6" edge="1" parent="1" source="etl" target="processed" style="endArrow=block;html=1;rounded=0;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="vUbbRhy43VmbEX2QA9eU-11" edge="1" parent="1" source="airflow" style="dashed=1;" target="mart">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="flow7" edge="1" parent="1" source="processed" target="metrics" style="endArrow=block;html=1;rounded=0;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"/>
         </mxCell>
+        <mxCell id="flow8" edge="1" parent="1" source="metrics" target="mart" style="endArrow=block;html=1;rounded=0;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="seed_to_master" edge="1" parent="1" source="seed" target="master_db" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#666666;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="producer_to_transaction" edge="1" parent="1" source="producer" target="transaction_db" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#666666;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="airflow_ingest_to_stream" edge="1" parent="1" source="airflow_ingest" target="spark_streaming" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#666666;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="airflow_ingest_to_producer" edge="1" parent="1" source="airflow_ingest" target="producer" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#666666;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="airflow_etl_to_etl" edge="1" parent="1" source="airflow_etl" target="etl" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#666666;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="airflow_etl_to_metrics" edge="1" parent="1" source="airflow_etl" target="metrics" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#666666;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="airflow_etl_to_mart" edge="1" parent="1" source="airflow_etl" target="mart" style="endArrow=block;html=1;rounded=0;dashed=1;strokeColor=#666666;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
       </root>
     </mxGraphModel>
   </diagram>
