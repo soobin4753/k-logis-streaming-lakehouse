@@ -109,3 +109,35 @@ build_shipment_metrics (배송 단위 지표 생성)
 build_data_mart (최종 분석 테이블 생성)  
 
 ---
+
+## ⚡ 5. Spark 처리 구조
+
+본 프로젝트에서는 Spark를 Streaming과 Batch 두 가지 방식으로 활용합니다.
+
+### 🔹 Spark Streaming
+Kafka로부터 배송 이벤트를 실시간으로 수집하여 Raw Parquet에 저장합니다.
+
+- Kafka Topic 구독 (delivery_events)
+- JSON 이벤트 파싱
+- event_timestamp 기반 파티셔닝
+- Raw Layer (/app/storage/raw) 적재
+
+---
+
+### 🔹 Spark Batch ETL
+Raw 데이터를 정제하여 분석 가능한 형태로 변환합니다.
+
+- 데이터 타입 변환 및 정제
+- 이벤트 순서 기반 배송 흐름 재구성
+- 파생 컬럼 생성 (delay, risk 등)
+- Processed Parquet 생성
+
+---
+
+### 🔹 Metrics / Mart 생성
+정제된 데이터를 기반으로 분석용 집계 테이블을 생성합니다.
+
+- shipment_metrics: 배송 단위 KPI 계산
+- mart_region_delay: 지역별 지연 분석
+- mart_hub_performance: 허브 성능 분석
+- mart_risk_summary: 리스크 요약 분석
