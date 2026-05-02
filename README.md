@@ -149,7 +149,7 @@ Raw 데이터를 정제하여 분석 가능한 형태로 변환합니다.
 
 ## 📊 6. BI Dashboard (Superset)
 
-![Dashboard](/img/Dashboard.png)
+![Dashboard](/img/Dashboard.jpg)
 
 본 프로젝트에서는 Data Mart를 기반으로 Superset Dashboard를 구성하여 배송 지연 및 리스크를 시각적으로 분석할 수 있도록 구현했습니다.
 
