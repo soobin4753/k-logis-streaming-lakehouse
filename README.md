@@ -6,6 +6,7 @@
 - Kafka를 통해 배송 이벤트를 실시간으로 수집하며  
 - Spark Streaming으로 Raw 데이터를 Parquet로 저장한 뒤  
 - Batch ETL을 통해 분석용 Metrics와 Data Mart를 생성합니다  
+- Superset을 활용하여 배송 지연 및 리스크를 시각적으로 분석합니다
 
 ---
 
@@ -29,7 +30,9 @@ Processed Parquet (분석 가능한 형태로 변환)
 ↓  
 shipment_metrics (배송 단위 집계 데이터 생성)  
 ↓  
-Data Mart (최종 분석용 집계 테이블)  
+Data Mart (최종 분석용 집계 테이블)
+↓  
+Superset Dashboard
 
 ---
 
@@ -141,3 +144,67 @@ Raw 데이터를 정제하여 분석 가능한 형태로 변환합니다.
 - mart_region_delay: 지역별 지연 분석
 - mart_hub_performance: 허브 성능 분석
 - mart_risk_summary: 리스크 요약 분석
+
+---
+
+## 📊 6. BI Dashboard (Superset)
+
+![Dashboard](/img/Dashboard.png)
+
+본 프로젝트에서는 Data Mart를 기반으로 Superset Dashboard를 구성하여 배송 지연 및 리스크를 시각적으로 분석할 수 있도록 구현했습니다.
+
+---
+
+### ✅ Dashboard 개요
+
+**Logistics Risk & Delay Dashboard**
+
+배송 데이터의 전체 상태를 한눈에 파악하고, 지연 발생 원인과 리스크 패턴을 분석할 수 있도록 구성했습니다.
+
+---
+
+### ✅ KPI 지표
+
+- 총 배송 건수: 약 1,000건  
+- 배송 지연율: 89.4%  
+- 평균 배송 기간: 4.84일  
+- 평균 지연 시간: 3.49시간  
+
+---
+
+### ✅ 주요 시각화
+
+- 지역별 지연율 (Region 기반 분석)  
+- 허브별 지연율 (Hub 성능 분석)  
+- 리스크 등급 분포 (Low / Medium / High)  
+- 리스크 vs 지연 확률  
+- 시간별 이벤트 트렌드  
+
+---
+
+### ✅ BI 설계 방식
+
+- Raw 데이터 직접 조회하지 않음  
+- Metrics / Mart 테이블 기반 분석  
+- BI 레이어에서 복잡한 계산 최소화  
+- ID 대신 이름 기반 시각화 (region_name, hub_name)  
+- KPI와 분석 차트 분리  
+
+---
+
+## 🧠 7. 인사이트
+
+Dashboard 분석을 통해 다음과 같은 패턴을 확인할 수 있습니다.
+
+- 전체 배송 대비 지연율이 높은 구조  
+- 특정 지역 및 허브에서 지연이 집중되는 패턴  
+- high risk 배송이 실제 지연과 높은 상관관계를 보임  
+- 특정 시간대 물량 증가로 인한 병목 발생 가능  
+
+---
+
+## 🚀 8. 결론
+
+본 프로젝트는 실시간 데이터 수집부터 ETL, Data Mart, BI Dashboard까지 데이터 엔지니어링 전 과정을 통합적으로 구현한 파이프라인입니다.
+
+Superset Dashboard를 통해 물류 운영 상태를 직관적으로 파악하고, 지연 원인 분석 및 리스크 기반 의사결정을 지원할 수 있도록 구성했습니다.
