@@ -26,6 +26,10 @@ with DAG(
         bash_command=r"""
 docker exec logistics-postgres psql -U postgres -d logistics -v ON_ERROR_STOP=1 -c "
 TRUNCATE TABLE
+    mart_risk_summary,
+    mart_hub_performance,
+    mart_region_delay,
+    shipment_metrics,
     dispatch,
     shipment
 RESTART IDENTITY CASCADE;
@@ -43,10 +47,9 @@ mkdir -p /app/storage/raw
 mkdir -p /app/storage/processed
 mkdir -p /app/storage/checkpoint
 
-rm -rf /app/storage/raw/delivery_events || true
-rm -rf /app/storage/processed/delivery_events || true
-rm -rf /app/storage/checkpoint/raw_delivery_events || true
-rm -rf /app/storage/checkpoint/processed_delivery_events || true
+rm -rf /app/storage/raw/* || true
+rm -rf /app/storage/processed/* || true
+rm -rf /app/storage/checkpoint/* || true
 rm -rf /app/storage/metrics || true
 rm -rf /app/storage/mart || true
 rm -f /app/storage/streaming_raw.log || true
@@ -65,6 +68,10 @@ echo "===== storage reset completed ====="
     start_streaming = BashOperator(
         task_id="start_spark_streaming",
         bash_command=r"""
+docker exec spark-master bash -c '
+pkill -f streaming_raw_delivery_events.py || true
+'
+
 docker exec -d spark-master bash -c '
 cd /app/spark
 
